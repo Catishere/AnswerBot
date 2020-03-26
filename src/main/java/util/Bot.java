@@ -2,61 +2,34 @@ package util;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 public class Bot {
     private static Robot robot_instance;
-
+    private HashMap<String, String> countries = new HashMap<>();
+    private int jbDay;
+    
     public Bot() throws AWTException {
         robot_instance = new Robot();
+        countries.put("Bulgariq", "Sofiq");
+        countries.put("Bulgaria", "Sofia");
+        countries.put("Turciq", "Ankara");
+        countries.put("Ispaniq", "Madrid");
+        countries.put("Franciq", "Parish");
     }
 
-    public void click(Point mouse) throws InterruptedException {
-        robot_instance.mouseMove(mouse.x, mouse.y);
-        robot_instance.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-        TimeUnit.MILLISECONDS.sleep(50);
-        robot_instance.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+    public int getJbDay() {
+        return jbDay;
     }
 
-    public void pressEscape() throws InterruptedException {
-        robot_instance.keyPress(KeyEvent.VK_ESCAPE);
-        TimeUnit.MILLISECONDS.sleep(50);
-        robot_instance.keyRelease(KeyEvent.VK_ESCAPE);
+    public void setJbDay(int jbDay) {
+        System.out.println(jbDay);
+        this.jbDay = jbDay;
     }
-
-
-    public void move(Point mouse) {
-        robot_instance.mouseMove(mouse.x, mouse.y);
-    }
-
-    public void awaitColorChange(Point colorPos, Color color, boolean fromColor) throws AWTException, InterruptedException {
-        while (true) {
-            Color realColor = getColor(colorPos);
-            if (fromColor ^ color.equals(realColor)) return;
-            TimeUnit.SECONDS.sleep(5);
-        }
-    }
-
-    public void antiAFK() throws InterruptedException {
-        robot_instance.mousePress(InputEvent.BUTTON3_DOWN_MASK);
-        TimeUnit.MILLISECONDS.sleep(50);
-        robot_instance.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
-    }
-
-    public void clickUntilColorChange(Point mouse, Point colorPos, Color color, int delay, boolean fromColor) throws AWTException, InterruptedException {
-        while (true) {
-            Color realColor = getColor(colorPos);
-            if (fromColor ^ color.equals(realColor)) return;
-            click(mouse);
-            TimeUnit.SECONDS.sleep(delay);
-        }
-    }
-
+    
     private int processVerticalLine(int x, StringBuilder sb, BufferedImage chat) {
         int seriesIncrement = 1;
         boolean isLastHit = Pallette.hasColor(new Color(chat.getRGB(x, 0)));
@@ -74,6 +47,10 @@ public class Bot {
             isLastHit = isHit;
         }
         return seriesIncrement;
+    }
+    
+    public BufferedImage getDay() { 
+        return robot_instance.createScreenCapture(new Rectangle(1264, 108, 20, 20));
     }
 
     public String processText(BufferedImage chat) throws IOException {
@@ -106,13 +83,7 @@ public class Bot {
         sc.close();
         return output.toString();
     }
-
-    public Color getColor(Point pixel) throws AWTException {
-        Rectangle screenRect = new Rectangle(pixel.x, pixel.y, pixel.x, pixel.y + 1);
-        BufferedImage capture = robot_instance.createScreenCapture(screenRect);
-        return new Color(capture.getRGB(0,0), false);
-    }
-
+    
     public BufferedImage getChat(int line) {
         if (line < 0)
             line = 0;
@@ -122,14 +93,25 @@ public class Bot {
         return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21, 800, 18));
     }
     
-    private String getAnswer(String question) {
-        if (question.matches("[0-9x*^/+\\- =]+")) {
-            return Integer.toString((int) MathParser.eval(question));
-        }
+    private String getAnswer(String line) {
+        String question = line.substring(line.lastIndexOf(':') + 1).replace("?","");
+        question = question.replace("koren ot", "sqrt");
+        if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
+            return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
         else if (question.startsWith("Stolicata na "))
-            return "Sofia";
-        else
-            return "eh ne go znam twar";
+            return countries.get(question.substring(13));
+        else if (question.startsWith("tochen") || question.startsWith("to4en"))
+            return line.substring(8, line.indexOf("Zadade"));
+        else {
+            int jbIndex = question.indexOf("jb");
+            int jbIndex2 = question.indexOf("jail");
+            if (jbIndex >= 0)
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 2)));
+            else if (jbIndex2 >= 0)
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 4)));
+            else
+                return "eh ne go znam twa";
+        }
     }
     
     public void act(String line) throws FileNotFoundException {
@@ -137,8 +119,9 @@ public class Bot {
         {
             File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
             PrintWriter pw = new PrintWriter(file);
-            pw.print("say " + getAnswer(line.substring(line.lastIndexOf(':') + 1)) + "; alias quest;");
+            pw.print("say " + getAnswer(line) + "; alias quest;");
             pw.close();
+            System.out.println("Received Answer");
         }
     }
 
