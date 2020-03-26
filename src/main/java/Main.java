@@ -2,6 +2,7 @@ import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 import util.Bot;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +13,9 @@ public class Main {
     public static void main(String[] args) {
         try {
             Bot bot = new Bot();
+
+            System.out.println(bot.processText(ImageIO.read(new File("asdasd.png"))));
+            
             Tesseract tesseract = new Tesseract();
             String dayString;
             TimeUnit.SECONDS.sleep(2);
@@ -55,8 +59,6 @@ public class Main {
                 bot.act(processedLine);
             }
 
-//            ImageIO.read(new File("testpng1.png"));
-//            System.out.println(bot.processText(ImageIO.read(new File("testpng1.png"))));
         } catch (IOException | AWTException | InterruptedException | TesseractException e) {
             e.printStackTrace();
         }

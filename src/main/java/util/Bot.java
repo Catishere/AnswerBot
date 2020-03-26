@@ -98,9 +98,11 @@ public class Bot {
         question = question.replace("koren ot", "sqrt");
         if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
             return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
+        else if (question.contains(" li "))
+            return "da; say ne";
         else if (question.startsWith("Stolicata na "))
             return countries.get(question.substring(13));
-        else if (question.startsWith("tochen") || question.startsWith("to4en"))
+        else if (question.contains("simon") || question.contains("Simon"))
             return line.substring(8, line.indexOf("Zadade"));
         else {
             int jbIndex = question.indexOf("jb");
@@ -115,6 +117,7 @@ public class Bot {
     }
     
     public void act(String line) throws FileNotFoundException {
+        System.out.println(line);
         if (line.startsWith("[Quest]"))
         {
             File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
