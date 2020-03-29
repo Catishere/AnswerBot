@@ -1,4 +1,4 @@
-package util;
+package robot;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -8,6 +8,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import util.Capitals;
+import util.MathParser;
+import util.Pallette;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

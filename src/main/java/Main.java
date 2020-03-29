@@ -1,10 +1,8 @@
-import util.Bot;
+import robot.Bot;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Time;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
