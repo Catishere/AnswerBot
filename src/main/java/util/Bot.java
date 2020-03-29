@@ -1,5 +1,14 @@
 package util;
 
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -9,6 +18,7 @@ import java.util.Scanner;
 
 public class Bot {
     private static Robot robot_instance;
+    private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private Capitals capitals = new Capitals();
     private int jbDay;
     
@@ -80,42 +90,89 @@ public class Bot {
     }
     
     public BufferedImage getChat(int line) {
-        if (line < 0)
-            line = 0;
-        else if (line > 5)
-            line = 5;
-
         return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21, 800, 18));
     }
     
-    private String getAnswer(String line) {
-        String question = line.substring(line.lastIndexOf(':') + 1).replace("?","").trim();
+    private String getAnswer(String line) throws IOException {
+        String question = line.substring(line.lastIndexOf(':') + 1)
+                .replace("?","")
+                .replace("=","")
+                .trim();
         question = question.replace("koren ot", "sqrt");
+        int indexCapital;
         if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
-            return Integer.toString((int) MathParser.eval(question.replace('x', '*').replace("=","")));
+            return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
         else if (question.contains(" li "))
             return "da; say ne";
-        else if (question.toUpperCase().contains("STOLICATA NA")) {
-            if (question.contains(" e "))
-                return capitals.getCapitals().get(question.substring(0, question.indexOf(' ')).toUpperCase());
-            return capitals.getCountries().get(question.substring(13).toUpperCase());
+        else if ((indexCapital = question.toUpperCase().indexOf("STOLICA")) >= 0) {
+
+            if (indexCapital == 0) {
+                String countryAnswer = capitals.getCountries().get(question.substring(13).toUpperCase());
+                if (countryAnswer == null)
+                    return getFromGoogle(question);
+                else
+                    return countryAnswer;
+            }
+            
+            String capitalAnswer = capitals.getCapitals().get(question.substring(0, question.indexOf(' ')).toUpperCase());
+            if (capitalAnswer == null)
+                return getFromGoogle(question);
+            else
+                return capitalAnswer;
         }
         else if (question.toUpperCase().contains("SIMON"))
             return line.substring(8, line.indexOf("Zadade"));
         else {
             int jbIndex = question.indexOf("jb");
             int jbIndex2 = question.indexOf("jail");
+            int jbIndex3 = question.indexOf("jailbreak");
+            int jbIndex4 = question.indexOf("jail break");
             if (jbIndex >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 2).replace("=","")));
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 2)));
             else if (jbIndex2 >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 4).replace("=","")));
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex2 + 4)));
+            else if (jbIndex3 >= 0)
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex3 + 9)));
+            else if (jbIndex4 >= 0)
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex4 + 10)));
+            else if (question.contains(" cat") || question.contains(" Cat"))
+                return "cat";
             else
-                return "eh ne go znam twa";
+                return getFromGoogle(question);
         }
     }
-    
-    public void act(String line) throws FileNotFoundException {
-        System.out.println(line);
+
+    public String getFromGoogle(String query) throws IOException {
+        HttpGet request = new HttpGet("https://www.google.com/search?q=" + query
+        .replace(' ', '+')
+        .replace("c", "ts")
+        .replace("j", "dzh") + "&hl=en");
+        request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
+
+        String answer;
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            HttpEntity entity = response.getEntity();
+            String result = EntityUtils.toString(entity);
+            int answerIndex;
+            int answerCapitalIndex;
+            if ((answerCapitalIndex = result.indexOf("class=\"FLP8od\"")) >= 0)
+                answer = result
+                        .substring(result.indexOf('>', answerCapitalIndex) + 1, result.indexOf('<', answerCapitalIndex));
+            else if ((answerIndex = result.indexOf("class=\"Z0LcW\">")) >= 0)
+                answer = result
+                        .substring(answerIndex + 14, result.indexOf('<', answerIndex));
+            else
+                answer = "No answer";
+            
+            answer = answer.replace('\u00A0', ' ').replace(",","");
+            if (answer.matches("^[0-9].+"))
+                return answer.substring(0, answer.indexOf(' '));
+            else
+                return answer.replace(",","");
+        }
+    }
+
+    public void act(String line) throws IOException {
         if (line.startsWith("[Quest]"))
         {
             File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");

@@ -20,7 +20,7 @@ public class Capitals {
         put("ASMARA", "ERITREQ");
         put("ASTANA", "KAZAHSTAN");
         put("ASUNSION", "PARAGVAI");
-        put("ATINA", "GARCIQ");
+        put("ATINA", "GURCIQ");
         put("ASHHABAD", "TURKMENISTAN");
         put("BAGDAD", "IRAK");
         put("BAKU", "AZERBAIJAN");
@@ -225,7 +225,11 @@ public class Capitals {
 
     public Capitals() {
         for (java.util.Map.Entry<String, String> entry : capitals.entrySet()) {
-            countries.put(entry.getValue(), entry.getKey());
+            String value = entry.getValue();
+            String key = entry.getKey();
+            if (value.endsWith("Q"))
+                countries.put(value.substring(0, value.length() - 1) + "A", key);
+            countries.put(value, key);
         }
     }
 }
