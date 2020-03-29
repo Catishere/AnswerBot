@@ -9,16 +9,11 @@ import java.util.Scanner;
 
 public class Bot {
     private static Robot robot_instance;
-    private HashMap<String, String> countries = new HashMap<>();
+    private Capitals capitals = new Capitals();
     private int jbDay;
     
     public Bot() throws AWTException {
         robot_instance = new Robot();
-        countries.put("Bulgariq", "Sofiq");
-        countries.put("Bulgaria", "Sofia");
-        countries.put("Turciq", "Ankara");
-        countries.put("Ispaniq", "Madrid");
-        countries.put("Franciq", "Parish");
     }
 
     public int getJbDay() {
@@ -94,23 +89,26 @@ public class Bot {
     }
     
     private String getAnswer(String line) {
-        String question = line.substring(line.lastIndexOf(':') + 1).replace("?","");
+        String question = line.substring(line.lastIndexOf(':') + 1).replace("?","").trim();
         question = question.replace("koren ot", "sqrt");
         if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
-            return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
+            return Integer.toString((int) MathParser.eval(question.replace('x', '*').replace("=","")));
         else if (question.contains(" li "))
             return "da; say ne";
-        else if (question.startsWith("Stolicata na "))
-            return countries.get(question.substring(13));
-        else if (question.contains("simon") || question.contains("Simon"))
+        else if (question.toUpperCase().contains("STOLICATA NA")) {
+            if (question.contains(" e "))
+                return capitals.getCapitals().get(question.substring(0, question.indexOf(' ')).toUpperCase());
+            return capitals.getCountries().get(question.substring(13).toUpperCase());
+        }
+        else if (question.toUpperCase().contains("SIMON"))
             return line.substring(8, line.indexOf("Zadade"));
         else {
             int jbIndex = question.indexOf("jb");
             int jbIndex2 = question.indexOf("jail");
             if (jbIndex >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 2)));
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 2).replace("=","")));
             else if (jbIndex2 >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 4)));
+                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 4).replace("=","")));
             else
                 return "eh ne go znam twa";
         }
@@ -122,9 +120,10 @@ public class Bot {
         {
             File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
             PrintWriter pw = new PrintWriter(file);
-            pw.print("say " + getAnswer(line) + "; alias quest;");
+            String answer = getAnswer(line);
+            pw.print("say " + answer + "; alias quest;");
             pw.close();
-            System.out.println("Received Answer");
+            System.out.println(answer);
         }
     }
 

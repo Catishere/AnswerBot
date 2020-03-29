@@ -1,5 +1,3 @@
-import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
 import util.Bot;
 
 import javax.imageio.ImageIO;
@@ -7,23 +5,15 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Time;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
     public static void main(String[] args) {
         try {
             Bot bot = new Bot();
-
-            System.out.println(bot.processText(ImageIO.read(new File("asdasd.png"))));
-            
-            Tesseract tesseract = new Tesseract();
-            String dayString;
-            TimeUnit.SECONDS.sleep(2);
-            do {
-                dayString = tesseract.doOCR(bot.getDay()).trim();
-            } while (!dayString.matches("[1-9][0-9]*"));
-        
-            bot.setJbDay(Integer.parseInt(dayString));
+            Scanner scan = new Scanner(System.in);
+            bot.setJbDay(scan.nextInt());
 
             
 //            char[] alphanum = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9'};
@@ -44,7 +34,6 @@ public class Main {
             
             while (true) {
                 String processedLine = bot.processText(bot.getChat(line));
-                
                 if (processedLine.equals(lastLine))
                     continue;
                 
@@ -55,11 +44,10 @@ public class Main {
                     lastLine = processedLine;
                     line++;
                 }
-                
                 bot.act(processedLine);
             }
 
-        } catch (IOException | AWTException | InterruptedException | TesseractException e) {
+        } catch (IOException | AWTException | InterruptedException e) {
             e.printStackTrace();
         }
     }
