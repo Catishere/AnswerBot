@@ -158,12 +158,12 @@ public class Bot {
             String result = EntityUtils.toString(entity);
             int answerIndex;
             int answerCapitalIndex;
-            if ((answerCapitalIndex = result.indexOf("class=\"FLP8od\"")) >= 0)
+            if ((answerCapitalIndex = result.indexOf("class=\"FLP8od")) >= 0)
                 answer = result
                         .substring(result.indexOf('>', answerCapitalIndex) + 1, result.indexOf('<', answerCapitalIndex));
-            else if ((answerIndex = result.indexOf("class=\"Z0LcW\">")) >= 0)
+            else if ((answerIndex = result.indexOf("class=\"Z0LcW")) >= 0)
                 answer = result
-                        .substring(answerIndex + 14, result.indexOf('<', answerIndex));
+                        .substring(result.indexOf('>', answerIndex) + 1, result.indexOf('<', answerIndex));
             else
                 answer = "No answer";
             
