@@ -1,6 +1,4 @@
-
 import robot.Bot;
-
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +15,6 @@ public class Main {
 //            bot.train(alphanum,"E:/Screenshots/alphanum.png");
 //            bot.train(symbols,"E:/Screenshots/symbols.png");
 
-            
             File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
             if(file.delete())
             {
