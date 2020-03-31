@@ -100,12 +100,17 @@ public class Bot {
                 .replace("=","")
                 .trim();
         question = question.replace("koren ot", "sqrt");
+        
+        String jbDayReturn;
+        String questionLowerCase = question.toLowerCase();
+        
         int indexCapital;
+
         if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
             return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
         else if (question.contains(" li "))
             return "da; say ne";
-        else if ((indexCapital = question.toLowerCase().indexOf("stolica")) >= 0) {
+        else if ((indexCapital = questionLowerCase.indexOf("stolica")) >= 0) {
 
             if (indexCapital == 0) {
                 String countryAnswer = capitals.getCountries().get(question.substring(13).toLowerCase());
@@ -125,26 +130,68 @@ public class Bot {
             else
                 return capitalAnswer;
         }
-        else if (question.toLowerCase().contains("simon"))
+        else if (questionLowerCase.contains("simon"))
             return line.substring(8, line.indexOf("Zadade"));
-        else {
-            int jbIndex = question.indexOf("jb");
-            int jbIndex2 = question.indexOf("jail");
-            int jbIndex3 = question.indexOf("jailbreak");
-            int jbIndex4 = question.indexOf("jail break");
-            if (jbIndex >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex + 2)));
-            else if (jbIndex2 >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex2 + 4)));
-            else if (jbIndex3 >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex3 + 9)));
-            else if (jbIndex4 >= 0)
-                return Integer.toString((int) MathParser.eval(jbDay + question.substring(jbIndex4 + 10)));
-            else if (question.contains(" cat") || question.contains(" Cat"))
-                return "cat";
-            else
-                return getFromGoogle(question);
-        }
+        else if (question.contains(" jivi ") || question.contains(" jiwi "))
+            return getAliveTerrorists();
+        else if (question.contains(" murtvi ") || question.contains(" murtwi "))
+            return getDeadTerrorists();
+        else if (questionLowerCase.contains(" t ") || questionLowerCase.contains(" teroristi "))
+            return getAllTerrorists();
+        else if ((jbDayReturn = tryJailbreakDay(question)) != null)
+            return jbDayReturn;
+        else if (question.contains("sekundi") && question.contains("komanda"))
+            return "5 sekundi; say 10 sekundi";
+        else if (questionLowerCase.contains(" cat"))
+            return "cat";
+        else
+            return getFromGoogle(question);
+    }
+    
+    private String tryJailbreakDay(String question) {
+        
+        String jb1;
+        String jb2;
+        String jb3;
+        String jb4;
+        
+        if ((jb1 = tryJailbreakDayWithString(question, "jb")) != null)
+            return jb1;
+        else if ((jb2 = tryJailbreakDayWithString(question, "jail")) != null)
+            return jb2;
+        else if ((jb3 = tryJailbreakDayWithString(question, "jailbreak")) != null)
+            return jb3;
+        else if ((jb4 = tryJailbreakDayWithString(question, "jail break")) != null)
+            return jb4;
+        else
+            return null;
+    }
+    
+    private String tryJailbreakDayWithString(String question, String target) {
+        int jbDayIndex = question.indexOf(target);
+        if (jbDayIndex >= 0)
+            return Integer.toString((int)MathParser.eval(jbDay + question.substring(jbDayIndex + target.length())));
+        else
+            return null;
+    }
+
+    public String getDeadTerrorists() throws IOException {
+        String[] message = getTerroristsMessageArray();
+        return Integer.toString(Integer.parseInt(message[4]) - Integer.parseInt(message[1]));
+    }
+
+    public String getAllTerrorists() throws IOException {
+        return getTerroristsMessageArray()[4];
+    }
+
+    public String getAliveTerrorists() throws IOException {
+        return getTerroristsMessageArray()[1];
+    }
+
+    private String[] getTerroristsMessageArray() throws IOException {
+        BufferedImage image = robot_instance.createScreenCapture(new Rectangle(10, 1014, 300, 18));
+        String text = processText(image);
+        return text.split(" ");
     }
 
     public String getFromGoogle(String query) throws IOException {

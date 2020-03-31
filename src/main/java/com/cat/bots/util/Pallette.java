@@ -24,6 +24,10 @@ public class Pallette {
         return new Color(255, 180, 0);
     }
 
+    public static Color getSpecialYellow() {
+        return new Color(255, 178, 0);
+    }
+    
     public static Color getBlack() {
         return new Color(0, 0, 0);
     }
@@ -33,7 +37,8 @@ public class Pallette {
                 || getGreen().equals(sample)
                 || getBlue().equals(sample)
                 || getYellow().equals(sample)
-                || getGray().equals(sample);
+                || getGray().equals(sample)
+                || getSpecialYellow().equals(sample);
     }
 
     public static char serialize(Color color) {

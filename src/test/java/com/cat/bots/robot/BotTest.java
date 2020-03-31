@@ -24,4 +24,6 @@ class BotTest {
         Bot bot = new Bot();
         assertEquals(bot.getFromGoogle("Kolko e visok Niagarskiyat vodopad"), "51");
     }
+    
+    
 }
