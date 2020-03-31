@@ -14,7 +14,7 @@ class BotTest {
 
     @Test
     void processText() throws IOException, AWTException {
-        BufferedImage chat = ImageIO.read(new File("asdasd.png"));
+        BufferedImage chat = ImageIO.read(new File("testimage.png"));
         Bot bot = new Bot();
         assertEquals(bot.processText(chat), "[SIMON] diviq zapad ;]: az li trqq natiskam");
     }
