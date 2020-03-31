@@ -1,4 +1,6 @@
-import robot.Bot;
+package com.cat.bots;
+
+import com.cat.bots.robot.Bot;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;

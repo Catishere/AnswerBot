@@ -1,4 +1,4 @@
-package util;
+package com.cat.bots.util;
 
 public class MathParser {
     public static double eval(final String str) {

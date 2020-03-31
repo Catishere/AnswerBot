@@ -1,6 +1,5 @@
-package robot;
+package com.cat.bots.robot;
 
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -8,15 +7,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import util.Capitals;
-import util.MathParser;
-import util.Pallette;
+import com.cat.bots.util.Capitals;
+import com.cat.bots.util.MathParser;
+import com.cat.bots.util.Pallette;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.HashMap;
 import java.util.Scanner;
 
 public class Bot {
@@ -107,23 +105,27 @@ public class Bot {
             return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
         else if (question.contains(" li "))
             return "da; say ne";
-        else if ((indexCapital = question.toUpperCase().indexOf("STOLICA")) >= 0) {
+        else if ((indexCapital = question.toLowerCase().indexOf("stolica")) >= 0) {
 
             if (indexCapital == 0) {
-                String countryAnswer = capitals.getCountries().get(question.substring(13).toUpperCase());
+                String countryAnswer = capitals.getCountries().get(question.substring(13).toLowerCase());
                 if (countryAnswer == null)
                     return getFromGoogle(question);
                 else
                     return countryAnswer;
             }
             
-            String capitalAnswer = capitals.getCapitals().get(question.substring(0, question.indexOf(' ')).toUpperCase());
+            String capitalAnswer= capitals
+                    .getCapitals()
+                    .get(question.substring(0, question
+                            .indexOf(' '))
+                            .toLowerCase());
             if (capitalAnswer == null)
                 return getFromGoogle(question);
             else
                 return capitalAnswer;
         }
-        else if (question.toUpperCase().contains("SIMON"))
+        else if (question.toLowerCase().contains("simon"))
             return line.substring(8, line.indexOf("Zadade"));
         else {
             int jbIndex = question.indexOf("jb");

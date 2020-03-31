@@ -1,4 +1,4 @@
-package util;
+package com.cat.bots.util;
 
 import java.awt.*;
 
