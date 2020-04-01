@@ -15,6 +15,8 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class Bot {
@@ -33,10 +35,14 @@ public class Bot {
         googleClasses = new String[] {
                 "FLP8od",
                 "Z0LcW",
-                "gsrt vk_bk dDoNo",
+                "gsrt",
+                "vk_bk dDoNo",
                 "title",
+                "qv3Wpe",
+                "vk_bk sol-tmp\" style=\"float:left;margin-top:-3px;font-size:64px\"><span class=\"wob_t\" id=\"wob_tm\" style=\"display:inline\"",
                 "tw-data-text tw-text-large tw-ta\" data-placeholder=\"Translation\" id=\"tw-target-text\" style=\"text-align:left\"><span",
-                "ztXv9"
+                "ztXv9",
+                "e24Kjd"
         };
     }
 
@@ -131,7 +137,7 @@ public class Bot {
                             .indexOf(" na ") + 4)
                             .toLowerCase());
                 if (countryAnswer == null)
-                    return getFromGoogle(question, true);
+                    return getFromGoogle(question, true).trim();
                 else
                     return countryAnswer;
             }
@@ -142,7 +148,7 @@ public class Bot {
                             .indexOf(' '))
                             .toLowerCase());
             if (capitalAnswer == null)
-                return getFromGoogle(question, true);
+                return getFromGoogle(question, true).trim();
             else
                 return capitalAnswer;
         }
@@ -161,7 +167,7 @@ public class Bot {
         else if (questionLowerCase.contains(" cat"))
             return "cat";
         else
-            return getFromGoogle(question, true);
+            return getFromGoogle(question, true).trim();
     }
     
     private String tryJailbreakDay(String question) {
@@ -210,6 +216,14 @@ public class Bot {
         return text.split(" ");
     }
 
+    private String encodeValue(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException(ex.getCause());
+        }
+    }
+
     public String getFromGoogle(String question, boolean translate) throws IOException {
         
         question = question
@@ -224,7 +238,7 @@ public class Bot {
 
         System.out.println("From google with translation: " + translate + " query: " + query);
         
-        HttpGet request = new HttpGet("https://www.google.com/search?q=" + query + "&hl=en&aqs=chrome..69i57.431j0j9&sourceid=chrome&ie=UTF-8");
+        HttpGet request = new HttpGet("https://www.google.com/search?q=" + (query.contains("^") ? encodeValue(query) : query) + "&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
 
         String answer = "";
@@ -242,7 +256,7 @@ public class Bot {
             
             for (String tag : googleClasses) {
                 if ((answerIndex = result.indexOf("class=\"" + tag)) >= 0) {
-                    if (tag.equals("ztXv9")) {
+                    if (tag.equals("ztXv9") || tag.equals("e24Kjd")) {
                         startString = "<b>";
                         endString = "</b>";
                     }
@@ -307,7 +321,7 @@ public class Bot {
         }
         else if (line.startsWith(nickname + ": Google kaji mi ")) {
             if (!resolved) {
-                String answer = getFromGoogle(line.substring(nickname.length() + 17), true);
+                String answer = getFromGoogle(line.substring(nickname.length() + 17), true).trim();
                 PrintWriter pw = new PrintWriter(file);
                 pw.print("say " + answer + "; alias quest;");
                 pw.close();

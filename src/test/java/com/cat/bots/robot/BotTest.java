@@ -41,6 +41,9 @@ class BotTest {
     @Test
     void getAnswer() throws IOException {
         assertEquals("kiev", bot.getAnswer("koq e stolicata na ukraina"));
+        assertEquals("-1", bot.getAnswer("vremeto navun"));
+        assertEquals("Wednesday", bot.getAnswer("Koi den ot sedmicata e dnes"));
+        assertEquals("4", bot.getFromGoogle("log10 10000", false).trim());
         assertEquals("Bulgaria", bot.getAnswer("Koi zavurshi na chetvurto mqsto na svetovnoto purvenstvo po futbol prez 1994 godina"));
     }
 }
