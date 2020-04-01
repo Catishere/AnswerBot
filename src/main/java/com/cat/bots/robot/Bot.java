@@ -35,7 +35,8 @@ public class Bot {
                 "Z0LcW",
                 "gsrt vk_bk dDoNo",
                 "title",
-                "tw-data-text tw-text-large tw-ta\" data-placeholder=\"Translation\" id=\"tw-target-text\" style=\"text-align:left\"><span"
+                "tw-data-text tw-text-large tw-ta\" data-placeholder=\"Translation\" id=\"tw-target-text\" style=\"text-align:left\"><span",
+                "ztXv9"
         };
     }
 
@@ -106,7 +107,7 @@ public class Bot {
         return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21, 800, 18));
     }
     
-    private String getAnswer(String line) throws IOException {
+    public String getAnswer(String line) throws IOException {
         String question = line.substring(line.lastIndexOf(':') + 1)
                 .replace("?","")
                 .replace("=","")
@@ -123,16 +124,19 @@ public class Bot {
         else if (question.contains(" li "))
             return "da; say ne";
         else if ((indexCapital = questionLowerCase.indexOf("stolica")) >= 0) {
-
-            if (indexCapital == 0) {
-                String countryAnswer = capitals.getCountries().get(question.substring(13).toLowerCase());
+            if (question.indexOf(" e") < indexCapital) {
+                String countryAnswer = capitals
+                        .getCountries()
+                        .get(question.substring(question
+                            .indexOf(" na ") + 4)
+                            .toLowerCase());
                 if (countryAnswer == null)
                     return getFromGoogle(question, true);
                 else
                     return countryAnswer;
             }
-            
-            String capitalAnswer= capitals
+        
+            String capitalAnswer = capitals
                     .getCapitals()
                     .get(question.substring(0, question
                             .indexOf(' '))
@@ -216,8 +220,7 @@ public class Bot {
         
         if (translate)
             query = query
-                .replace("c", "ts")
-                .replace("j", "dzh");
+                .replace("c", "ts");
 
         System.out.println("From google with translation: " + translate + " query: " + query);
         
@@ -227,16 +230,24 @@ public class Bot {
         String answer = "";
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
+            
             String result = EntityUtils.toString(entity);
+            String startString = ">";
+            String endString = "<";
             int answerIndex;
+            
             
             if (result.contains("Our systems have detected unusual traffic from your computer network"))
                 return "Google is not working";
             
             for (String tag : googleClasses) {
                 if ((answerIndex = result.indexOf("class=\"" + tag)) >= 0) {
+                    if (tag.equals("ztXv9")) {
+                        startString = "<b>";
+                        endString = "</b>";
+                    }
                     answer = result
-                            .substring(result.indexOf('>', answerIndex + tag.length() + 7) + 1, result.indexOf('<', answerIndex + tag.length() + 7));
+                            .substring(result.indexOf(startString, answerIndex + tag.length() + 7) +  + startString.length(), result.indexOf(endString, answerIndex + tag.length() + 7));
                     break;
                 }
             }

@@ -23,17 +23,24 @@ class BotTest {
     @Test
     void processText() throws IOException, AWTException {
         BufferedImage chat = ImageIO.read(new File("testimage.png"));
-        assertEquals(bot.processText(chat), "[SIMON] diviq zapad ;]: az li trqq natiskam");
+        assertEquals("[SIMON] diviq zapad ;]: az li trqq natiskam", bot.processText(chat));
     }
 
     @Test
     void getFromGoogle() throws IOException, AWTException {
-        assertEquals(bot.getFromGoogle("Kolko e visok Niagarskiyat vodopad", true), "51");
+        assertEquals("51", bot.getFromGoogle("Kolko e visok Niagarskiyat vodopad", true));
     }
 
 
     @Test
     void translateQuestion() throws AWTException, IOException {
-        assertEquals(bot.getFromGoogle("Prezidenta na Qponiq", true), "Shinzo Abe");
+        assertEquals("Shinzo Abe", bot.getFromGoogle("Prezidenta na Qponiq", true));
+        assertEquals("dog in japanese", bot.translateQuestion("kuche+na+qponski"));
+    }
+
+    @Test
+    void getAnswer() throws IOException {
+        assertEquals("kiev", bot.getAnswer("koq e stolicata na ukraina"));
+        assertEquals("Bulgaria", bot.getAnswer("Koi zavurshi na chetvurto mqsto na svetovnoto purvenstvo po futbol prez 1994 godina"));
     }
 }
