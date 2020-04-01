@@ -206,10 +206,14 @@ public class Bot {
         return text.split(" ");
     }
 
-    public String getFromGoogle(String query, boolean translate) throws IOException {
+    public String getFromGoogle(String question, boolean translate) throws IOException {
         
-        query = query.trim()
+        question = question
+                .trim()
                 .replace(' ', '+');
+        
+        String query = question;
+        
         if (translate)
             query = query
                 .replace("c", "ts")
@@ -239,7 +243,7 @@ public class Bot {
             
             if (answer.isEmpty()) {
                 if (translate)
-                    return getFromGoogle(translateQuestion(query), false);
+                    return getFromGoogle(translateQuestion(question), false);
                 else
                     return "Ne go znam";
             }
