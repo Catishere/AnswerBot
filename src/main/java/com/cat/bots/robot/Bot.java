@@ -21,10 +21,22 @@ public class Bot {
     private static Robot robot_instance;
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private Capitals capitals = new Capitals();
+    private String[] googleClasses;
     private int jbDay;
+    private boolean resolved = false;
+    private final String nickname = "Cat";
+    private String lastQuery;
     
     public Bot() throws AWTException {
+        
         robot_instance = new Robot();
+        googleClasses = new String[] {
+                "FLP8od",
+                "Z0LcW",
+                "gsrt vk_bk dDoNo",
+                "title",
+                "tw-data-text tw-text-large tw-ta\" data-placeholder=\"Translation\" id=\"tw-target-text\" style=\"text-align:left\"><span"
+        };
     }
 
     public int getJbDay() {
@@ -115,7 +127,7 @@ public class Bot {
             if (indexCapital == 0) {
                 String countryAnswer = capitals.getCountries().get(question.substring(13).toLowerCase());
                 if (countryAnswer == null)
-                    return getFromGoogle(question);
+                    return getFromGoogle(question, true);
                 else
                     return countryAnswer;
             }
@@ -126,7 +138,7 @@ public class Bot {
                             .indexOf(' '))
                             .toLowerCase());
             if (capitalAnswer == null)
-                return getFromGoogle(question);
+                return getFromGoogle(question, true);
             else
                 return capitalAnswer;
         }
@@ -145,7 +157,7 @@ public class Bot {
         else if (questionLowerCase.contains(" cat"))
             return "cat";
         else
-            return getFromGoogle(question);
+            return getFromGoogle(question, true);
     }
     
     private String tryJailbreakDay(String question) {
@@ -194,45 +206,104 @@ public class Bot {
         return text.split(" ");
     }
 
-    public String getFromGoogle(String query) throws IOException {
-        HttpGet request = new HttpGet("https://www.google.com/search?q=" + query
-        .replace(' ', '+')
-        .replace("c", "ts")
-        .replace("j", "dzh") + "&hl=en");
+    public String getFromGoogle(String query, boolean translate) throws IOException {
+        
+        query = query.trim()
+                .replace(' ', '+');
+        if (translate)
+            query = query
+                .replace("c", "ts")
+                .replace("j", "dzh");
+
+        System.out.println("From google with translation: " + translate + " query: " + query);
+        
+        HttpGet request = new HttpGet("https://www.google.com/search?q=" + query + "&hl=en&aqs=chrome..69i57.431j0j9&sourceid=chrome&ie=UTF-8");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
 
-        String answer;
+        String answer = "";
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
             String result = EntityUtils.toString(entity);
             int answerIndex;
-            int answerCapitalIndex;
-            if ((answerCapitalIndex = result.indexOf("class=\"FLP8od")) >= 0)
-                answer = result
-                        .substring(result.indexOf('>', answerCapitalIndex) + 1, result.indexOf('<', answerCapitalIndex));
-            else if ((answerIndex = result.indexOf("class=\"Z0LcW")) >= 0)
-                answer = result
-                        .substring(result.indexOf('>', answerIndex) + 1, result.indexOf('<', answerIndex));
-            else
-                answer = "No answer";
             
+            if (result.contains("Our systems have detected unusual traffic from your computer network"))
+                return "Google is not working";
+            
+            for (String tag : googleClasses) {
+                if ((answerIndex = result.indexOf("class=\"" + tag)) >= 0) {
+                    answer = result
+                            .substring(result.indexOf('>', answerIndex + tag.length() + 7) + 1, result.indexOf('<', answerIndex + tag.length() + 7));
+                    break;
+                }
+            }
+            
+            if (answer.isEmpty()) {
+                if (translate)
+                    return getFromGoogle(translateQuestion(query), false);
+                else
+                    return "Ne go znam";
+            }
+                
             answer = answer.replace('\u00A0', ' ').replace(",","");
             if (answer.matches("^[0-9].+"))
-                return answer.substring(0, answer.indexOf(' '));
+                if (answer.indexOf(' ') > 0)
+                    return answer.substring(0, answer.indexOf(' '));
+                else
+                    return answer;
             else
                 return answer.replace(",","");
         }
     }
 
+    public String translateQuestion(String question) {
+        HttpGet request = new HttpGet("https://translate.google.bg/translate_a/single?client=gtx&sl=bg&tl=en&hl=en&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&otf=1&ssel=0&tsel=0&xid=1791807&kc=3&tk=738940.917225&q="
+                + question);
+        request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            HttpEntity entity = response.getEntity();
+            String result = EntityUtils.toString(entity);
+            int start = result.indexOf('"') + 1;
+            int end = result.indexOf('"', start + 1);
+            System.out.println("From translation with result: "  + result.substring(start, end));
+            return result.substring(start, end);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void act(String line) throws IOException {
+        File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
+        
+        if (line.equals(lastQuery))
+            return;
+        else
+            lastQuery = line;
+        
         if (line.startsWith("[Quest]"))
         {
-            File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
-            PrintWriter pw = new PrintWriter(file);
-            String answer = getAnswer(line);
-            pw.print("say " + answer + "; alias quest;");
-            pw.close();
-            System.out.println(answer);
+            if (!resolved) {
+                String answer = getAnswer(line);
+                PrintWriter pw = new PrintWriter(file);
+                pw.print("say " + answer + "; alias quest;");
+                pw.close();
+                resolved = true;
+            }
+        }
+        else if (line.startsWith(nickname + ": Google kaji mi ")) {
+            if (!resolved) {
+                String answer = getFromGoogle(line.substring(nickname.length() + 17), true);
+                PrintWriter pw = new PrintWriter(file);
+                pw.print("say " + answer + "; alias quest;");
+                pw.close();
+                System.out.println(answer);
+                resolved = true;
+            }
+        } 
+        else if (resolved && line.startsWith(nickname)) {
+            if(file.delete())
+                System.out.println("File deleted successfully");
+            resolved = false;
         }
     }
 

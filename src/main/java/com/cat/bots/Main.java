@@ -19,19 +19,17 @@ public class Main {
 
             File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
             if(file.delete())
-            {
                 System.out.println("File deleted successfully");
-            }
-
+            
             Scanner scan = new Scanner(System.in);
             System.out.println("Select day: ");
             bot.setJbDay(scan.nextInt());
 
-
             TimeUnit.SECONDS.sleep(3);
             int line = 0;
             String lastLine = null;
-            
+
+            System.out.println("Running...");
             while (true) {
                 String processedLine = bot.processText(bot.getChat(line));
                 if (processedLine.equals(lastLine)) {
@@ -54,7 +52,6 @@ public class Main {
                 if (processedLine.isEmpty())
                     continue;
                 
-                System.out.println(line + ": " + processedLine);
                 bot.act(processedLine);
             }
 
