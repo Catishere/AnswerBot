@@ -11,13 +11,17 @@ import com.cat.bots.util.Capitals;
 import com.cat.bots.util.MathParser;
 import com.cat.bots.util.Pallette;
 
+import java.util.List;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Bot {
     private static Robot robot_instance;
@@ -26,7 +30,7 @@ public class Bot {
     private String[] googleClasses;
     private int jbDay;
     private boolean resolved = false;
-    private final String nickname = "Cat";
+    private final String nickname = "[Gamer] Cat ";
     private String lastQuery;
     
     public Bot() throws AWTException {
@@ -111,7 +115,7 @@ public class Bot {
     }
     
     public BufferedImage getChat(int line) {
-        return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21, 800, 18));
+        return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21, 1350, 18));
     }
     
     public String getAnswer(String line) throws IOException {
@@ -226,6 +230,20 @@ public class Bot {
             throw new RuntimeException(ex.getCause());
         }
     }
+    
+    private List<String> parseResultTable(String result) {
+        List<String> records = new ArrayList<>();
+        String recordRegex = "<td.*?>(.+?)\\s*<\\/td>";
+        Pattern pattern = Pattern.compile(recordRegex);
+        Matcher matcher = pattern.matcher(result).region(result.indexOf("<table>"), result.indexOf("</table>"));
+        
+        while (matcher.find()) {
+            String record = matcher.group();
+            record = record.replaceAll("<.+?>", "").replaceAll("\\(.+?\\)", "");
+            records.add(record.toLowerCase());
+        }
+        return records;
+    }
 
     public String getFromGoogle(String question, boolean translate) throws IOException {
         
@@ -262,8 +280,14 @@ public class Bot {
             for (String tag : googleClasses) {
                 if ((answerIndex = result.indexOf("class=\"" + tag)) >= 0) {
                     if (tag.equals("ztXv9") || tag.equals("e24Kjd")) {
-                        startString = "<b>";
-                        endString = "</b>";
+                        String[] questionTokens = question.split("%20");
+                        List<String> resultTableRecords = parseResultTable(result);
+                        for (String questionToken : questionTokens) {
+                            for (int j = 0; j < resultTableRecords.size(); j++) {
+                                if (j % 2 == 0 & resultTableRecords.get(j).contains(questionToken))
+                                    return resultTableRecords.get(j + 1);
+                            }
+                        }
                     }
                     answer = result
                             .substring(result.indexOf(startString, answerIndex + tag.length() + 7) +  + startString.length(), result.indexOf(endString, answerIndex + tag.length() + 7));
