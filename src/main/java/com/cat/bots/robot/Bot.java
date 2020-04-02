@@ -42,6 +42,7 @@ public class Bot {
                 "vk_bk sol-tmp\" style=\"float:left;margin-top:-3px;font-size:64px\"><span class=\"wob_t\" id=\"wob_tm\" style=\"display:inline\"",
                 "tw-data-text tw-text-large tw-ta\" data-placeholder=\"Translation\" id=\"tw-target-text\" style=\"text-align:left\"><span",
                 "ztXv9",
+                "ayqGOc",
                 "e24Kjd"
         };
     }
@@ -118,7 +119,9 @@ public class Bot {
                 .replace("?","")
                 .replace("=","")
                 .trim();
-        question = question.replace("koren ot", "sqrt");
+        question = question
+                .replace("koren ot", "sqrt")
+                .replaceAll("\\([A-Za-z :]+?\\)", "");
         
         String jbDayReturn;
         String questionLowerCase = question.toLowerCase();
@@ -126,7 +129,7 @@ public class Bot {
         int indexCapital;
 
         if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
-            return Integer.toString((int) MathParser.eval(question.replace('x', '*')));
+            return Long.toString((long) MathParser.eval(question.replace('x', '*')));
         else if (question.contains(" li "))
             return "da; say ne";
         else if ((indexCapital = questionLowerCase.indexOf("stolica")) >= 0) {
@@ -192,14 +195,14 @@ public class Bot {
     private String tryJailbreakDayWithString(String question, String target) {
         int jbDayIndex = question.indexOf(target);
         if (jbDayIndex >= 0)
-            return Integer.toString((int)MathParser.eval(jbDay + question.substring(jbDayIndex + target.length())));
+            return Long.toString((long)MathParser.eval(jbDay + question.substring(jbDayIndex + target.length())));
         else
             return null;
     }
 
     public String getDeadTerrorists() throws IOException {
         String[] message = getTerroristsMessageArray();
-        return Integer.toString(Integer.parseInt(message[4]) - Integer.parseInt(message[1]));
+        return Long.toString(Long.parseLong(message[4]) - Long.parseLong(message[1]));
     }
 
     public String getAllTerrorists() throws IOException {
@@ -226,19 +229,21 @@ public class Bot {
 
     public String getFromGoogle(String question, boolean translate) throws IOException {
         
-        question = question
-                .trim()
-                .replace(' ', '+');
+        question = question.replace(" ", "%20").toLowerCase();
+        if (translate)
+            question = question
+                    .replace("c", "ts")
+                    .replace("tsh", "ch");
         
         String query = question;
-        
-        if (translate)
-            query = query
-                .replace("c", "ts");
 
         System.out.println("From google with translation: " + translate + " query: " + query);
         
-        HttpGet request = new HttpGet("https://www.google.com/search?q=" + (query.contains("^") ? encodeValue(query) : query) + "&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
+        if (query.contains("^") 
+                || query.contains("+"))
+            query = encodeValue(query);
+        
+        HttpGet request = new HttpGet("https://www.google.com/search?q=" + query + "&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
 
         String answer = "";
@@ -311,6 +316,9 @@ public class Bot {
         
         if (line.startsWith("[Quest]"))
         {
+            if (line.trim().equals("[Quest] Nikoi ne uspq da otgovori pravilno na vuprosa!"))
+                return;
+            
             if (!resolved) {
                 String answer = getAnswer(line);
                 PrintWriter pw = new PrintWriter(file);
