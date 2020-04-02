@@ -316,7 +316,7 @@ public class Bot {
         
         if (line.startsWith("[Quest]"))
         {
-            if (line.trim().equals("[Quest] Nikoi ne uspq da otgovori pravilno na vuprosa!"))
+            if (line.trim().contains("otgovori pravilno na vuprosa"))
                 return;
             
             if (!resolved) {
@@ -336,7 +336,16 @@ public class Bot {
                 System.out.println(answer);
                 resolved = true;
             }
-        } 
+        } else if (line.startsWith(nickname + ": !pitam ")) {
+            if (!resolved) {
+                String answer = getAnswer(line.substring(nickname.length() + 9)).trim();
+                PrintWriter pw = new PrintWriter(file);
+                pw.print("say " + answer + "; alias quest;");
+                pw.close();
+                System.out.println(answer);
+                resolved = true;
+            }
+        }
         else if (resolved && line.startsWith(nickname)) {
             if(file.delete())
                 System.out.println("File deleted successfully");
