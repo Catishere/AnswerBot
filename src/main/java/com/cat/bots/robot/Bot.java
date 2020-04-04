@@ -60,11 +60,12 @@ public class Bot {
                 "vk_bk dDoNo",
                 "title",
                 "qv3Wpe",
-                "vk_bk sol-tmp\" style=\"float:left;margin-top:-3px;font-size:64px\"><span class=\"wob_t\" id=\"wob_tm\" style=\"display:inline\"",
+                "vk_bk sol-tmp\" style=\"float:left;margin-top:-3px;font-size:64px\"><span class=\"wob_t\" id=\"wob_tm\" style=\"display:inline\"", // translation
                 "tw-data-text tw-text-large tw-ta\" data-placeholder=\"Translation\" id=\"tw-target-text\" style=\"text-align:left\"><span",
                 "ztXv9",
                 "ayqGOc",
-                "e24Kjd"
+                //"o3Kv0", //coronavirus
+                "e24Kjd" //tables
         };
     }
     
@@ -250,6 +251,8 @@ public class Bot {
     private List<String> parseResultTable(String result) {
         List<String> records = new ArrayList<>();
         String recordRegex = "<td.*?>(.+?)\\s*<\\/td>";
+        if (!result.contains("<table>") || !result.contains("</table>"))
+            return null;
         Pattern pattern = Pattern.compile(recordRegex);
         Matcher matcher = pattern.matcher(result).region(result.indexOf("<table>"), result.indexOf("</table>"));
         
@@ -263,7 +266,9 @@ public class Bot {
 
     public String getFromGoogle(String question, boolean translate) throws IOException {
         
-        question = question.trim().replace(" ", "%20").toLowerCase();
+        question = question.trim()
+                .replace(" ", "%20")
+                .replace("\"", "%22");
         if (translate)
             question = question
                     .replace("c", "ts")
@@ -274,7 +279,8 @@ public class Bot {
         System.out.println("From google with translation: " + translate + " query: " + query);
         
         if (query.contains("^") 
-                || query.contains("+"))
+                || query.contains("+")
+                || query.contains("\""))
             query = encodeValue(query);
         
         HttpGet request = new HttpGet("https://www.google.com/search?q=" + query + "&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
@@ -298,6 +304,9 @@ public class Bot {
                     if (tag.equals("ztXv9") || tag.equals("e24Kjd")) {
                         String[] questionTokens = question.split("%20");
                         List<String> resultTableRecords = parseResultTable(result);
+                        if (resultTableRecords == null)
+                            break;
+                        
                         for (String questionToken : questionTokens) {
                             for (int j = 0; j < resultTableRecords.size(); j++) {
                                 if (j % 2 == 0 & resultTableRecords.get(j).contains(questionToken))
@@ -336,10 +345,10 @@ public class Bot {
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
             String result = EntityUtils.toString(entity);
-            int start = result.indexOf('"') + 1;
-            int end = result.indexOf('"', start + 1);
+            int start = result.indexOf("[\"") + 2;
+            int end = result.indexOf("\",", start + 1);
             System.out.println("From translation with result: "  + result.substring(start, end));
-            return result.substring(start, end);
+            return result.substring(start, end).replace("\\", "");
         } catch (IOException e) {
             e.printStackTrace();
         }

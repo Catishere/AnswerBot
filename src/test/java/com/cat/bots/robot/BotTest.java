@@ -46,10 +46,12 @@ class BotTest {
     void getAnswer() throws IOException {
         LocalDate ld = LocalDate.now();
         assertEquals("kiev", bot.getAnswer("koq e stolicata na ukraina"));
-        assertEquals("5", bot.getAnswer("vremeto navun"));
+        assertEquals("4", bot.getAnswer("vremeto navun"));
         assertEquals(ld.getDayOfWeek().toString().toLowerCase(), bot.getAnswer("Koi den ot sedmicata e dnes").toLowerCase());
         assertEquals("4", bot.getFromGoogle("log10 10000", false).trim());
         assertEquals("Santa Cruz de Tenerife", bot.getAnswer("koq e stolicata na tenerife"));
         assertEquals("bulgaria", bot.getAnswer("Koi zavurshi na chetvurto mqsto na svetovnoto purvenstvo po futbol prez 1994 godina"));
     }
+    
+    
 }
