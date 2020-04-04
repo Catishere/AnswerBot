@@ -391,6 +391,24 @@ public class Bot {
             resolved = false;
         }
     }
+    
+    public void executeCommand(String command) {
+        int commandEnd = command.indexOf(' ');
+        if (commandEnd < 0)
+            return;
+        
+        String commandName = command.substring(0, commandEnd);
+        String commandArgument = command.substring(commandEnd + 1);
+        switch (commandName) {
+            case "changename":
+                nickname = commandArgument;
+                break;
+            case "changeday":
+                jbDay = Integer.parseInt(commandArgument);
+                break;
+        }
+        System.out.println("Executing \"" + commandName + "\" with argument \"" + commandArgument + "\"");
+    }
 
     public void train(char[] alphabet, String filepath) throws IOException {
         BufferedImage chat = ImageIO.read(new File(filepath));

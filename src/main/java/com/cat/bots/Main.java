@@ -2,6 +2,7 @@ package com.cat.bots;
 
 import com.cat.bots.robot.Bot;
 import com.cat.bots.util.CommandLine;
+import com.cat.bots.util.CommandThread;
 
 import java.awt.*;
 import java.io.IOException;
@@ -28,9 +29,13 @@ public class Main {
             TimeUnit.SECONDS.sleep(3);
             int line = 0;
             String lastLine = null;
-
-            System.out.println("Running...");
+            CommandThread commandThread = new CommandThread();
+            commandThread.setBot(bot);
+            commandThread.start();
+            
+            System.out.println("Bot Running...");
             while (true) {
+                
                 String processedLine = bot.processText(bot.getChat(line));
                 if (processedLine.equals(lastLine)) {
                     line++;
