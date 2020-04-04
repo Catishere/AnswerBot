@@ -1,5 +1,6 @@
 package com.cat.bots.robot;
 
+import com.cat.bots.util.CommandLine;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -24,16 +25,32 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Bot {
+    private static final String NOT_FOUND_RESPONSE = "Ne go znam";
+    private static final String BLANK_CHARACTER = "18n18n18n18n18n18n18n18n18n";
+    private static final String QUEST_PREFIX = "[Quest]";
+    private static final String GOOGLE_REQUEST_STRING = "Google kaji mi ";
+    private static final String ANSWER_REQUEST_STRING = "!pitam ";
+    
     private static Robot robot_instance;
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private Capitals capitals = new Capitals();
     private String[] googleClasses;
     private int jbDay;
     private boolean resolved = false;
-    private final String nickname = "[Gamer] Cat ";
     private String lastQuery;
+
+    private String nickname;
+    private File config;
+    private File outputConfig;
     
-    public Bot() throws AWTException {
+    public Bot(CommandLine clp) throws AWTException {
+        
+        nickname = clp.getArgument("nickname");
+        config = new File(clp.getArgument("config"));
+        outputConfig = new File(clp.getArgument("output"));
+        
+        if(outputConfig.delete())
+            System.out.println("File deleted successfully");
         
         robot_instance = new Robot();
         googleClasses = new String[] {
@@ -50,7 +67,7 @@ public class Bot {
                 "e24Kjd"
         };
     }
-
+    
     public int getJbDay() {
         return jbDay;
     }
@@ -84,8 +101,7 @@ public class Bot {
     }
 
     public String processText(BufferedImage chat) throws IOException {
-        File file = new File("training.txt");
-        Scanner sc = new Scanner(file);
+        Scanner sc = new Scanner(config);
 
         StringBuilder sb = new StringBuilder();
         StringBuilder output = new StringBuilder();
@@ -94,7 +110,7 @@ public class Bot {
             int seriesIncrement = processVerticalLine(x, sb, chat);
             if ((x+1) % 10 == 0) {
                 while (sc.hasNextLine()) {
-                    if (x == 9 && sb.toString().equals("18n18n18n18n18n18n18n18n18n"))
+                    if (x == 9 && sb.toString().equals(BLANK_CHARACTER))
                         return "";
                     String line = sc.nextLine();
                     if (line.startsWith(sb.toString())) {
@@ -103,7 +119,7 @@ public class Bot {
                     }
                 }
 
-                sc = new Scanner(file);
+                sc = new Scanner(config);
                 sb.setLength(0);
             } else {
                 sb.append(seriesIncrement);
@@ -247,7 +263,7 @@ public class Bot {
 
     public String getFromGoogle(String question, boolean translate) throws IOException {
         
-        question = question.replace(" ", "%20").toLowerCase();
+        question = question.trim().replace(" ", "%20").toLowerCase();
         if (translate)
             question = question
                     .replace("c", "ts")
@@ -299,7 +315,7 @@ public class Bot {
                 if (translate)
                     return getFromGoogle(translateQuestion(question), false);
                 else
-                    return "Ne go znam";
+                    return NOT_FOUND_RESPONSE;
             }
                 
             answer = answer.replace('\u00A0', ' ').replace(",","");
@@ -331,39 +347,38 @@ public class Bot {
     }
 
     public void act(String line) throws IOException {
-        File file = new File("D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
         
         if (line.equals(lastQuery))
             return;
         else
             lastQuery = line;
         
-        if (line.startsWith("[Quest]"))
+        if (line.startsWith(QUEST_PREFIX))
         {
             if (line.trim().contains("otgovori pravilno na vuprosa"))
                 return;
             
             if (!resolved) {
                 String answer = getAnswer(line);
-                PrintWriter pw = new PrintWriter(file);
+                PrintWriter pw = new PrintWriter(outputConfig);
                 pw.print("say " + answer + "; alias quest;");
                 pw.close();
                 resolved = true;
             }
         }
-        else if (line.startsWith(nickname + ": Google kaji mi ")) {
+        else if (line.startsWith(nickname + ": " + GOOGLE_REQUEST_STRING)) {
             if (!resolved) {
-                String answer = getFromGoogle(line.substring(nickname.length() + 17), true).trim();
-                PrintWriter pw = new PrintWriter(file);
+                String answer = getFromGoogle(line.substring(nickname.length() + GOOGLE_REQUEST_STRING.length() + 2), true).trim();
+                PrintWriter pw = new PrintWriter(outputConfig);
                 pw.print("say " + answer + "; alias quest;");
                 pw.close();
                 System.out.println(answer);
                 resolved = true;
             }
-        } else if (line.startsWith(nickname + ": !pitam ")) {
+        } else if (line.startsWith(nickname + ": " + ANSWER_REQUEST_STRING)) {
             if (!resolved) {
-                String answer = getAnswer(line.substring(nickname.length() + 9)).trim();
-                PrintWriter pw = new PrintWriter(file);
+                String answer = getAnswer(line.substring(nickname.length() + ANSWER_REQUEST_STRING.length() + 2)).trim();
+                PrintWriter pw = new PrintWriter(outputConfig);
                 pw.print("say " + answer + "; alias quest;");
                 pw.close();
                 System.out.println(answer);
@@ -371,7 +386,7 @@ public class Bot {
             }
         }
         else if (resolved && line.startsWith(nickname)) {
-            if(file.delete())
+            if(outputConfig.delete())
                 System.out.println("File deleted successfully");
             resolved = false;
         }

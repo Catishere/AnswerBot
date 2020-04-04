@@ -1,5 +1,6 @@
 package com.cat.bots.robot;
 
+import com.cat.bots.util.CommandLine;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,8 @@ class BotTest {
     
     @BeforeAll
     public static void initializeBot() throws AWTException {
-        bot = new Bot();
+        CommandLine cmd = new CommandLine();
+        bot = new Bot(cmd);
     }
 
     @Test
@@ -44,10 +46,10 @@ class BotTest {
     void getAnswer() throws IOException {
         LocalDate ld = LocalDate.now();
         assertEquals("kiev", bot.getAnswer("koq e stolicata na ukraina"));
-        assertEquals("-2", bot.getAnswer("vremeto navun"));
+        assertEquals("5", bot.getAnswer("vremeto navun"));
         assertEquals(ld.getDayOfWeek().toString().toLowerCase(), bot.getAnswer("Koi den ot sedmicata e dnes").toLowerCase());
         assertEquals("4", bot.getFromGoogle("log10 10000", false).trim());
-        assertEquals("Santa Cruz", bot.getAnswer("koq e stolicata na tenerife"));
-        //assertEquals("Bulgaria", bot.getAnswer("Koi zavurshi na chetvurto mqsto na svetovnoto purvenstvo po futbol prez 1994 godina"));
+        assertEquals("Santa Cruz de Tenerife", bot.getAnswer("koq e stolicata na tenerife"));
+        assertEquals("bulgaria", bot.getAnswer("Koi zavurshi na chetvurto mqsto na svetovnoto purvenstvo po futbol prez 1994 godina"));
     }
 }
