@@ -420,12 +420,12 @@ public class Bot {
         HttpGet request = new HttpGet("https://www.google.com/search?q=" + question + "%20lyrics&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
         StringBuilder sb = new StringBuilder();
-        
+
+        int line = 0;
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
             String result = EntityUtils.toString(entity);
             int indexOfTag = 0;
-            int line = 0;
             sb.append("alias spamycs lyrics0\n");
             while ((indexOfTag = result.indexOf("jsname=\"YS01Ge\"", indexOfTag + 1)) >= 0) {
                 sb
@@ -442,7 +442,7 @@ public class Bot {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "Loaded";
+        return line == 0 ? "Nqma q" : "Loaded";
     }
 
     private void saveLyrics(String lyrics) throws FileNotFoundException {
