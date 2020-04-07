@@ -25,7 +25,7 @@ class BotSingleTest {
     
     @Test
     void getAnswer() throws IOException {
-        assertEquals("蝙蝠吃病毒死亡", bot.getAnswer("\"Koito prilep qde ot virus umira\" na kitaiski"));
+        assertEquals("Head päeva", bot.getAnswer("Dobur den na estonski"));
     }
     
     
