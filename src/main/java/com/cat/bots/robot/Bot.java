@@ -30,7 +30,9 @@ public class Bot {
     private static final String QUEST_PREFIX = "[Quest]";
     private static final String GOOGLE_REQUEST_STRING = "Google kaji mi ";
     private static final String ANSWER_REQUEST_STRING = "!pitam ";
-    
+    private static final String LYRICS_REQUEST_STRING = "!pusni ";
+    private static final String LYRICS_FILE_PATH = "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\output.cfg";
+
     private static Robot robot_instance;
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private Capitals capitals = new Capitals();
@@ -393,6 +395,15 @@ public class Bot {
                 System.out.println(answer);
                 resolved = true;
             }
+        } else if (line.startsWith(nickname + ": " + LYRICS_REQUEST_STRING)) {
+            if (!resolved) {
+                String result = loadLyrics(line.substring(nickname.length() + ANSWER_REQUEST_STRING.length() + 2)).trim();
+                PrintWriter pw = new PrintWriter(outputConfig);
+                pw.print("say " + result + "; alias quest;");
+                pw.close();
+                System.out.println(result);
+                resolved = true;
+            }
         }
         else if (resolved && line.startsWith(nickname)) {
             if(outputConfig.delete())
@@ -400,7 +411,47 @@ public class Bot {
             resolved = false;
         }
     }
-    
+
+    private String loadLyrics(String question) {
+        question = question.trim()
+                .replace(" ", "%20")
+                .replace("\"", "%22");
+
+        HttpGet request = new HttpGet("https://www.google.com/search?q=" + question + "%20lyrics&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
+        request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
+        StringBuilder sb = new StringBuilder();
+        
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            HttpEntity entity = response.getEntity();
+            String result = EntityUtils.toString(entity);
+            int indexOfTag = 0;
+            int line = 0;
+            sb.append("alias spamycs lyrics0\n");
+            while ((indexOfTag = result.indexOf("jsname=\"YS01Ge\"", indexOfTag + 1)) >= 0) {
+                sb
+                        .append("alias lyrics")
+                        .append(line)
+                        .append(" \"say ")
+                        .append(result.substring(indexOfTag + 16, result.indexOf('<', indexOfTag)).replace("\"",""))
+                        .append(" ;alias spamycs lyrics")
+                        .append(line + 1)
+                        .append("\"\n");
+                line++;
+            }
+            saveLyrics(sb.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "Loaded";
+    }
+
+    private void saveLyrics(String lyrics) throws FileNotFoundException {
+        File file = new File(LYRICS_FILE_PATH);
+        PrintWriter pw = new PrintWriter(file);
+        pw.print(lyrics);
+        pw.close();
+    }
+
     public void executeCommand(String command) {
         int commandEnd = command.indexOf(' ');
         if (commandEnd < 0)
