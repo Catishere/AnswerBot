@@ -12,15 +12,16 @@ import com.cat.bots.util.Capitals;
 import com.cat.bots.util.MathParser;
 import com.cat.bots.util.Pallette;
 
-import java.util.List;
+import java.awt.event.KeyEvent;
+import java.util.*;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,19 +29,22 @@ public class Bot {
     private static final String NOT_FOUND_RESPONSE = "Ne go znam";
     private static final String BLANK_CHARACTER = "18n18n18n18n18n18n18n18n18n";
     private static final String QUEST_PREFIX = "[Quest]";
+    private static final String SPEC_TRANSFER_SUFFIX = "transferira Cat kam SPECTATOR";
     private static final String GOOGLE_REQUEST_STRING = "Google kaji mi ";
     private static final String ANSWER_REQUEST_STRING = "!pitam ";
     private static final String LYRICS_REQUEST_STRING = "!pusni ";
     private static final String LYRICS_FILE_PATH = "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\output.cfg";
 
     private static Robot robot_instance;
+    private Pallette pallette;
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private Capitals capitals = new Capitals();
     private String[] googleClasses;
+    private List<String> specTransferResponses;
     private int jbDay;
     private boolean resolved = false;
     private String lastQuery;
-
+    
     private String nickname;
     private File config;
     private File outputConfig;
@@ -50,10 +54,18 @@ public class Bot {
         nickname = clp.getArgument("nickname");
         config = new File(clp.getArgument("config"));
         outputConfig = new File(clp.getArgument("output"));
-        
+        pallette = new Pallette();
         if(outputConfig.delete())
             System.out.println("File deleted successfully");
-        
+
+        specTransferResponses = Arrays.asList("ne me barai",
+                "ne sum afk we",
+                "pak li shte me mestite spec",
+                "pak li spec",
+                "ashdoigfashdoigoi",
+                "stiga spec we doklad",
+                "afk si ti dosadnik",
+                "wrushtaite me obratno we");
         robot_instance = new Robot();
         googleClasses = new String[] {
                 "FLP8od",
@@ -82,10 +94,10 @@ public class Bot {
     
     private int processVerticalLine(int x, StringBuilder sb, BufferedImage chat) {
         int seriesIncrement = 1;
-        boolean isLastHit = Pallette.hasColor(new Color(chat.getRGB(x, 0)));
+        boolean isLastHit = pallette.hasColor(new Color(chat.getRGB(x, 0)));
         for (int y = 1; y < chat.getHeight(); y++) {
             Color color = new Color(chat.getRGB(x, y));
-            boolean isHit = Pallette.hasColor(color);
+            boolean isHit = pallette.hasColor(color);
 
             if (isLastHit == isHit)
                 seriesIncrement++;
@@ -134,7 +146,8 @@ public class Bot {
     }
     
     public BufferedImage getChat(int line) {
-        return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21, 1350, 18));
+        int deadOffset = isDead() ? 80 : 0;
+        return robot_instance.createScreenCapture(new Rectangle(10, 899 + line*21 - deadOffset, 1350, 18));
     }
     
     public String getAnswer(String line) throws IOException {
@@ -151,10 +164,12 @@ public class Bot {
         
         int indexCapital;
 
-        if (question.matches("[0-9x*^/+\\- =sqrt]+")) 
+        if (question.matches("[0-9x*^/+\\- =sqrt]+"))
             return Long.toString((long) MathParser.eval(question.replace('x', '*')));
         else if (question.contains(" li "))
             return "da; say ne";
+        else if (question.matches("[0-9]+do[0-9]+"))
+            return question.replace("do", "");
         else if ((indexCapital = questionLowerCase.indexOf("stolica")) >= 0) {
             if (question.indexOf(" e") < indexCapital) {
                 String countryAnswer = capitals
@@ -356,13 +371,18 @@ public class Bot {
         }
         return null;
     }
+    
+    private void writeConfig(String cnf) throws IOException {
+        BufferedWriter out = new BufferedWriter(new FileWriter(outputConfig), cnf.length());
+        out.write(cnf);
+        out.close(); 
+    }
 
     public void act(String line) throws IOException {
+        String nicknameRegex = "(~DEAD~ )?(\\[.+?])?( )?" + nickname + "( )?: ";
         
-        if (line.equals(lastQuery))
+        if (line.equals(lastQuery) || !line.contains(nickname))
             return;
-        else
-            lastQuery = line;
         
         if (line.startsWith(QUEST_PREFIX))
         {
@@ -371,41 +391,39 @@ public class Bot {
             
             if (!resolved) {
                 String answer = getAnswer(line);
-                PrintWriter pw = new PrintWriter(outputConfig);
-                pw.print("say " + answer + "; alias quest;");
-                pw.close();
+                writeConfig("say " + answer + "; alias quest;");
+                resolved = true;
+            }
+        } else if (line.trim().endsWith(SPEC_TRANSFER_SUFFIX)) {
+            int randomIndex = new Random().nextInt(specTransferResponses.size());
+            writeConfig("say " + specTransferResponses.get(randomIndex) + "; alias quest;");
+        }  else if (line.matches(nicknameRegex + GOOGLE_REQUEST_STRING + ".+")) {
+            if (!resolved) {
+                lastQuery = line;
+                String answer = getFromGoogle(line.substring(line.indexOf(": ") + + GOOGLE_REQUEST_STRING.length() + 2), true).trim();
+                writeConfig("say " + answer + "; alias quest;");
+                System.out.println(answer);
+                resolved = true;
+            }
+        } else if (line.matches(nicknameRegex + ANSWER_REQUEST_STRING + ".+")) {
+            if (!resolved) {
+                lastQuery = line;
+                String answer = getAnswer(line.substring(line.indexOf(": ") + ANSWER_REQUEST_STRING.length() + 2)).trim();
+                writeConfig("say " + answer + "; alias quest;");
+                System.out.println(answer);
                 resolved = true;
             }
         }
-        else if (line.startsWith(nickname + ": " + GOOGLE_REQUEST_STRING)) {
+        else if (line.matches(nicknameRegex + LYRICS_REQUEST_STRING + ".+")) {
             if (!resolved) {
-                String answer = getFromGoogle(line.substring(nickname.length() + GOOGLE_REQUEST_STRING.length() + 2), true).trim();
-                PrintWriter pw = new PrintWriter(outputConfig);
-                pw.print("say " + answer + "; alias quest;");
-                pw.close();
-                System.out.println(answer);
-                resolved = true;
-            }
-        } else if (line.startsWith(nickname + ": " + ANSWER_REQUEST_STRING)) {
-            if (!resolved) {
-                String answer = getAnswer(line.substring(nickname.length() + ANSWER_REQUEST_STRING.length() + 2)).trim();
-                PrintWriter pw = new PrintWriter(outputConfig);
-                pw.print("say " + answer + "; alias quest;");
-                pw.close();
-                System.out.println(answer);
-                resolved = true;
-            }
-        } else if (line.startsWith(nickname + ": " + LYRICS_REQUEST_STRING)) {
-            if (!resolved) {
-                String result = loadLyrics(line.substring(nickname.length() + ANSWER_REQUEST_STRING.length() + 2)).trim();
-                PrintWriter pw = new PrintWriter(outputConfig);
-                pw.print("say " + result + "; alias quest;");
-                pw.close();
+                lastQuery = line;
+                String result = loadLyrics(line.substring(line.indexOf(": ") + LYRICS_REQUEST_STRING.length() + 2)).trim();
+                writeConfig("say " + result + "; alias quest;");
                 System.out.println(result);
                 resolved = true;
             }
         }
-        else if (resolved && line.startsWith(nickname)) {
+        else if (resolved && line.matches(nicknameRegex + ".+")) {
             if(outputConfig.delete())
                 System.out.println("File deleted successfully");
             resolved = false;
@@ -468,6 +486,11 @@ public class Bot {
                 break;
         }
         System.out.println("Executing \"" + commandName + "\" with argument \"" + commandArgument + "\"");
+    }
+    
+    public boolean isDead() {
+        Color col = robot_instance.getPixelColor(1799,43);
+        return col.equals(pallette.getDeadYellow());
     }
 
     public void train(char[] alphabet, String filepath) throws IOException {

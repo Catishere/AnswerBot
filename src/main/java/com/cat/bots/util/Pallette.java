@@ -3,36 +3,60 @@ package com.cat.bots.util;
 import java.awt.*;
 
 public class Pallette {
-
-    public static Color getRed() {
-        return new Color(255,63,63);
-    }
-
-    public static Color getGreen() {
-        return new Color(0, 204, 0);
-    }
-
-    public static Color getBlue() {
-        return new Color(153, 204, 255);
-    }
-
-    public static Color getGray() {
-        return new Color(204, 204, 204);
-    }
-
-    public static Color getYellow() {
-        return new Color(255, 180, 0);
-    }
-
-    public static Color getSpecialYellow() {
-        return new Color(255, 178, 0);
-    }
     
-    public static Color getBlack() {
-        return new Color(0, 0, 0);
+    private Color red;
+    private Color green;
+    private Color blue;
+    private Color gray;
+    private Color yellow;
+    private Color specialYellow;
+    private Color deadYellow;
+    private Color black;
+
+    public Pallette() {
+        this.red = new Color(255,63,63);
+        this.green = new Color(0, 204, 0);
+        this.blue = new Color(153, 204, 255);
+        this.gray = new Color(204, 204, 204);
+        this.yellow = new Color(255, 180, 0);
+        this.specialYellow = new Color(255, 178, 0);
+        this.deadYellow = new Color(255, 176, 0);
+        this.black = new Color(0, 0, 0);
     }
 
-    public static boolean hasColor(Color sample) {
+    public Color getRed() {
+        return red;
+    }
+
+    public Color getGreen() {
+        return green;
+    }
+
+    public Color getBlue() {
+        return blue;
+    }
+
+    public Color getGray() {
+        return gray;
+    }
+
+    public Color getYellow() {
+        return yellow;
+    }
+
+    public Color getSpecialYellow() {
+        return specialYellow;
+    }
+
+    public Color getDeadYellow() {
+        return deadYellow;
+    }
+
+    public Color getBlack() {
+        return black;
+    }
+
+    public boolean hasColor(Color sample) {
         return getRed().equals(sample)
                 || getGreen().equals(sample)
                 || getBlue().equals(sample)
@@ -41,18 +65,18 @@ public class Pallette {
                 || getSpecialYellow().equals(sample);
     }
 
-    public static char serialize(Color color) {
-        if (Pallette.getRed().equals(color))
+    public char serialize(Color color) {
+        if (getRed().equals(color))
             return 'r';
-        else if (Pallette.getGreen().equals(color))
+        else if (getGreen().equals(color))
             return 'g';
-        else if (Pallette.getBlue().equals(color))
+        else if (getBlue().equals(color))
             return 'b';
-        else if (Pallette.getYellow().equals(color))
+        else if (getYellow().equals(color))
             return 'y';
-        else if (Pallette.getBlack().equals(color))
+        else if (getBlack().equals(color))
             return 'z';
-        else if (Pallette.getGray().equals(color))
+        else if (getGray().equals(color))
             return 'w';
         else
             return 'n';

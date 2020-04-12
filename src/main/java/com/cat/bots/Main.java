@@ -21,11 +21,9 @@ public class Main {
 //            char[] symbols = {'!','@','$','^','&','*','(',')','_','+','=','-','[',']','{','}','\\','|',',','\"','.',',','/'};
 //            bot.train(alphanum,"E:/Screenshots/alphanum.png");
 //            bot.train(symbols,"E:/Screenshots/symbols.png");
-            
             Scanner scan = new Scanner(System.in);
             System.out.println("Select day: ");
             bot.setJbDay(scan.nextInt());
-
             TimeUnit.SECONDS.sleep(3);
             int line = 0;
             String lastLine = null;

@@ -43,7 +43,7 @@ public class CommandLine {
     }
     
     private void initDefault() {
-        arguments.put("nickname", "Cat ");
+        arguments.put("nickname", "Cat");
         arguments.put("config", "training.txt");
         arguments.put("test", "false");
         arguments.put("test-input", "testimage.png");
