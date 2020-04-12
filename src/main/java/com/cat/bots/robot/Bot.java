@@ -1,6 +1,6 @@
 package com.cat.bots.robot;
 
-import com.cat.bots.util.CommandLine;
+import com.cat.bots.util.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -8,9 +8,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import com.cat.bots.util.Capitals;
-import com.cat.bots.util.MathParser;
-import com.cat.bots.util.Pallette;
 
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -30,26 +27,40 @@ public class Bot {
     private static final String BLANK_CHARACTER = "18n18n18n18n18n18n18n18n18n";
     private static final String QUEST_PREFIX = "[Quest]";
     private static final String SPEC_TRANSFER_SUFFIX = "transferira Cat kam SPECTATOR";
+    private static final String TERRORIST_TRANSFER_SUFFIX = "transferira Cat kam TERRORIST";
     private static final String GOOGLE_REQUEST_STRING = "Google kaji mi ";
     private static final String ANSWER_REQUEST_STRING = "!pitam ";
     private static final String LYRICS_REQUEST_STRING = "!pusni ";
     private static final String LYRICS_FILE_PATH = "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\output.cfg";
 
+    private static Bot bot;
     private static Robot robot_instance;
     private Pallette pallette;
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private Capitals capitals = new Capitals();
     private String[] googleClasses;
+    private AutoSpammer spammerThread;
     private List<String> specTransferResponses;
     private int jbDay;
     private boolean resolved = false;
+    private boolean crying = false;
     private String lastQuery;
     
     private String nickname;
     private File config;
     private File outputConfig;
+
+    public static Bot getInstance(CommandLine clp) throws AWTException {
+        if (bot == null)
+            bot = new Bot(clp);
+        return bot;
+    }
     
-    public Bot(CommandLine clp) throws AWTException {
+    public static Bot getInstance() throws AWTException {
+        return bot;
+    }
+    
+    private Bot(CommandLine clp) throws AWTException {
         
         nickname = clp.getArgument("nickname");
         config = new File(clp.getArgument("config"));
@@ -58,14 +69,22 @@ public class Bot {
         if(outputConfig.delete())
             System.out.println("File deleted successfully");
 
-        specTransferResponses = Arrays.asList("ne me barai",
+        specTransferResponses = Arrays.asList(
+                "ne me barai",
                 "ne sum afk we",
                 "pak li shte me mestite spec",
                 "pak li spec",
                 "ashdoigfashdoigoi",
                 "stiga spec we doklad",
                 "afk si ti dosadnik",
-                "wrushtaite me obratno we");
+                "wrushtaite me obratno we",
+                "wuzkresete me",
+                "ehoooooooooooooooooo",
+                "tuka sum be",
+                "sprete se",
+                "koi pak me mesti we",
+                "nqma li da prestanete",
+                "prastani we");
         robot_instance = new Robot();
         googleClasses = new String[] {
                 "FLP8od",
@@ -91,7 +110,16 @@ public class Bot {
         System.out.println(jbDay);
         this.jbDay = jbDay;
     }
-    
+
+    public boolean isCrying() {
+        return crying;
+    }
+
+    public void setCrying(boolean crying) {
+        this.crying = crying;
+    }
+
+
     private int processVerticalLine(int x, StringBuilder sb, BufferedImage chat) {
         int seriesIncrement = 1;
         boolean isLastHit = pallette.hasColor(new Color(chat.getRGB(x, 0)));
@@ -377,11 +405,28 @@ public class Bot {
         out.write(cnf);
         out.close(); 
     }
+    
+    public void reloadSpamButton() throws InterruptedException {
+        robot_instance.keyPress(KeyEvent.VK_NUMPAD8);
+        TimeUnit.MILLISECONDS.sleep(50);
+        robot_instance.keyRelease(KeyEvent.VK_NUMPAD8);
+    }
+    
+    public void fireSpamButton() throws InterruptedException {
+        robot_instance.keyPress(KeyEvent.VK_NUMPAD5);
+        TimeUnit.MILLISECONDS.sleep(50);
+        robot_instance.keyRelease(KeyEvent.VK_NUMPAD5);
+    }
+    
+    public void cryInChat() throws IOException {
+        int randomIndex = new Random().nextInt(specTransferResponses.size());
+        writeConfig("say " + specTransferResponses.get(randomIndex) + "; alias quest;");
+    }
 
-    public void act(String line) throws IOException {
+    public void act(String line) throws IOException, InterruptedException {
         String nicknameRegex = "(~DEAD~ )?(\\[.+?])?( )?" + nickname + "( )?: ";
         
-        if (line.equals(lastQuery) || !line.contains(nickname))
+        if ((line.equals(lastQuery) || !line.contains(nickname)) && !line.contains("Quest"))
             return;
         
         if (line.startsWith(QUEST_PREFIX))
@@ -392,12 +437,18 @@ public class Bot {
             if (!resolved) {
                 String answer = getAnswer(line);
                 writeConfig("say " + answer + "; alias quest;");
+                System.out.println(answer);
                 resolved = true;
             }
         } else if (line.trim().endsWith(SPEC_TRANSFER_SUFFIX)) {
-            int randomIndex = new Random().nextInt(specTransferResponses.size());
-            writeConfig("say " + specTransferResponses.get(randomIndex) + "; alias quest;");
-        }  else if (line.matches(nicknameRegex + GOOGLE_REQUEST_STRING + ".+")) {
+            if (!crying) {
+                crying = true;
+                spammerThread = new AutoSpammer();
+                spammerThread.start();
+            }
+        } else if (line.trim().endsWith(TERRORIST_TRANSFER_SUFFIX)) {
+            crying = false;
+        } else if (line.matches(nicknameRegex + GOOGLE_REQUEST_STRING + ".+")) {
             if (!resolved) {
                 lastQuery = line;
                 String answer = getFromGoogle(line.substring(line.indexOf(": ") + + GOOGLE_REQUEST_STRING.length() + 2), true).trim();

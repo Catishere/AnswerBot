@@ -21,7 +21,7 @@ class BotTest {
     @BeforeAll
     public static void initializeBot() throws AWTException {
         CommandLine cmd = new CommandLine();
-        bot = new Bot(cmd);
+        bot = Bot.getInstance(cmd);
     }
 
     @Test
