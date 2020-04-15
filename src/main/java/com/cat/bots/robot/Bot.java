@@ -349,9 +349,10 @@ public class Bot {
                     if (tag.equals("ztXv9") || tag.equals("e24Kjd")) {
                         String[] questionTokens = question.split("%20");
                         List<String> resultTableRecords = parseResultTable(result);
-                        if (resultTableRecords == null)
-                            break;
-                        
+                        if (resultTableRecords == null) {
+                            addLyrics(getLongInfoBox(result));
+                            return "Result is ready!";
+                        }
                         for (String questionToken : questionTokens) {
                             for (int j = 0; j < resultTableRecords.size(); j++) {
                                 if (j % 2 == 0 & resultTableRecords.get(j).contains(questionToken))
@@ -381,6 +382,42 @@ public class Bot {
             else
                 return answer.replace(",","");
         }
+    }
+
+    private void addLyrics(List<String> lyrics) throws FileNotFoundException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("alias spamycs lyrics0\n");
+        int i;
+        for (i = 0; i < lyrics.size(); i++) {
+            sb
+                    .append("alias lyrics")
+                    .append(i)
+                    .append(" \"say ")
+                    .append(lyrics.get(i))
+                    .append(" ;alias spamycs lyrics")
+                    .append(i + 1)
+                    .append("\"\n");
+        }
+        sb.append(";alias lyrics").append(i).append(" say ---;");
+        saveLyrics(sb.toString());
+    }
+
+    private List<String> getLongInfoBox(String result) {
+        int start = result.indexOf("<span class=\"e24Kjd\">");
+        result = result
+                .substring(start, result
+                        .indexOf("</span>", start))
+                .replaceAll("<.+?>", "")
+                .replaceAll("\\(.+?\\)", "")
+                .replace("&quot;", "\'");
+        int lineStart = 0;
+        int lineEnd = 0;
+        List<String> lines = new ArrayList<>();
+        while ((lineEnd = result.indexOf(' ', lineStart + 70)) > 0) {
+            lines.add(result.substring(lineStart, Math.min(lineEnd, lineStart + 80)));
+            lineStart = lineEnd + 1;
+        }
+        return lines;
     }
 
     public String translateQuestion(String question) {
@@ -424,14 +461,14 @@ public class Bot {
     }
 
     public void act(String line) throws IOException, InterruptedException {
-        String nicknameRegex = "(~DEAD~ )?(\\[.+?])?( )?" + nickname + "( )?: ";
+        String nicknameRegex = "([~*]DEAD[~*] )?(\\[.+?])?( )?" + nickname + "( )?: ";
         
         if ((line.equals(lastQuery) || !line.contains(nickname)) && !line.contains("Quest"))
             return;
         
         if (line.startsWith(QUEST_PREFIX))
         {
-            if (line.trim().contains("otgovori pravilno na vuprosa"))
+            if (line.trim().contains("otgovori pravilno na vaprosa"))
                 return;
             
             if (!resolved) {
@@ -488,30 +525,24 @@ public class Bot {
 
         HttpGet request = new HttpGet("https://www.google.com/search?q=" + question + "%20lyrics&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
-        StringBuilder sb = new StringBuilder();
-
-        int line = 0;
+        
+        boolean found = false;
+        
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
             String result = EntityUtils.toString(entity);
+            List<String> lyrics = new ArrayList<>();
             int indexOfTag = 0;
-            sb.append("alias spamycs lyrics0\n");
             while ((indexOfTag = result.indexOf("jsname=\"YS01Ge\"", indexOfTag + 1)) >= 0) {
-                sb
-                        .append("alias lyrics")
-                        .append(line)
-                        .append(" \"say ")
-                        .append(result.substring(indexOfTag + 16, result.indexOf('<', indexOfTag)).replace("\"",""))
-                        .append(" ;alias spamycs lyrics")
-                        .append(line + 1)
-                        .append("\"\n");
-                line++;
+                lyrics.add(result.substring(indexOfTag + 16, result.indexOf('<', indexOfTag)).replace("\"", ""));
+                found = true;
             }
-            saveLyrics(sb.toString());
+            addLyrics(lyrics);
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return line == 0 ? "Nqma q" : "Loaded";
+        return found ? "Loaded" : "Nqma q";
     }
 
     private void saveLyrics(String lyrics) throws FileNotFoundException {
@@ -535,8 +566,21 @@ public class Bot {
             case "changeday":
                 jbDay = Integer.parseInt(commandArgument);
                 break;
+            case "testline":
+                try {
+                    act(commandArgument);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "pitam":
+                try {
+                    System.out.println(getAnswer(commandArgument));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
         }
-        System.out.println("Executing \"" + commandName + "\" with argument \"" + commandArgument + "\"");
+        System.out.println("Executed \"" + commandName + "\" with argument \"" + commandArgument + "\"");
     }
     
     public boolean isDead() {

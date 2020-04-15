@@ -227,8 +227,8 @@ public class Capitals {
         for (java.util.Map.Entry<String, String> entry : capitals.entrySet()) {
             String value = entry.getValue();
             String key = entry.getKey();
-            if (value.endsWith("Q"))
-                countries.put(value.substring(0, value.length() - 1) + "A", key);
+            if (value.endsWith("q"))
+                countries.put(value.substring(0, value.length() - 1) + "a", key);
             countries.put(value, key);
         }
     }
