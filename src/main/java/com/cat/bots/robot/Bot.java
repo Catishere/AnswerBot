@@ -31,7 +31,7 @@ public class Bot {
     private static final String GOOGLE_REQUEST_STRING = "Google kaji mi ";
     private static final String ANSWER_REQUEST_STRING = "!pitam ";
     private static final String LYRICS_REQUEST_STRING = "!pusni ";
-    private static final String LYRICS_FILE_PATH = "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\output.cfg";
+    private static final String LYRICS_FILE_PATH = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\output.cfg";
 
     private static Bot bot;
     private static Robot robot_instance;
@@ -316,7 +316,6 @@ public class Bot {
                 .replace("\"", "%22");
         if (translate)
             question = question
-                    .replace("c", "ts")
                     .replace("tsh", "ch");
         
         String query = question;
@@ -409,11 +408,15 @@ public class Bot {
                         .indexOf("</span>", start))
                 .replaceAll("<.+?>", "")
                 .replaceAll("\\(.+?\\)", "")
-                .replace("&quot;", "\'");
+                .replaceAll("&.+?;", "");
         int lineStart = 0;
         int lineEnd = 0;
+        int len = result.length();
+
         List<String> lines = new ArrayList<>();
-        while ((lineEnd = result.indexOf(' ', lineStart + 70)) > 0) {
+        while ((lineEnd = result.indexOf(' ', lineStart + 70)) > 0 || len - lineStart > 0) {
+            if (lineEnd < 0)
+                lineEnd = len;
             lines.add(result.substring(lineStart, Math.min(lineEnd, lineStart + 80)));
             lineStart = lineEnd + 1;
         }
@@ -421,6 +424,11 @@ public class Bot {
     }
 
     public String translateQuestion(String question) {
+        ChangeableString cs = new ChangeableString(question);
+        String nonTranslatableString = removeNonTranslatableString(cs);
+        if (!nonTranslatableString.equals("*")) {
+            question = cs.toString();
+        }
         HttpGet request = new HttpGet("https://translate.google.bg/translate_a/single?client=gtx&sl=bg&tl=en&hl=en&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&otf=1&ssel=0&tsel=0&xid=1791807&kc=3&tk=738940.917225&q="
                 + question);
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
@@ -430,14 +438,35 @@ public class Bot {
             int start = result.indexOf("[\"") + 2;
             int end = result.indexOf("\",", start + 1);
             System.out.println("From translation with result: "  + result.substring(start, end));
-            return result.substring(start, end).replace("\\", "");
+            return result
+                    .substring(start, end)
+                    .replace("\\", "")
+                    .replace("*", nonTranslatableString);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
-    
+
+    private String removeNonTranslatableString(ChangeableString _question) {
+        String question = _question.toString();
+        int indexStart = question.indexOf('*');
+        int indexEnd;
+        String result;
+
+        if (indexStart >= 0)
+            indexEnd = question.indexOf('*', indexStart + 1);
+        else
+            return "*";
+
+        result = question.substring(indexStart, indexEnd);
+        _question.setString(question.replaceAll("\\*.+?\\*", "*"));
+        return result;
+    }
+
     private void writeConfig(String cnf) throws IOException {
+        if (!outputConfig.exists())
+            outputConfig.createNewFile();
         BufferedWriter out = new BufferedWriter(new FileWriter(outputConfig), cnf.length());
         out.write(cnf);
         out.close(); 

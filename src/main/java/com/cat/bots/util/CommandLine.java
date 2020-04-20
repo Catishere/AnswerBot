@@ -48,7 +48,7 @@ public class CommandLine {
         arguments.put("test", "false");
         arguments.put("test-input", "testimage.png");
         arguments.put("test-output", "testoutput.txt");
-        arguments.put("output", "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
+        arguments.put("output", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\\cstrike\\quest.cfg");
     }
     
     public String getArgument(String name) {
