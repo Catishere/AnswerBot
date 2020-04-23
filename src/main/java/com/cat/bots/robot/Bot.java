@@ -8,8 +8,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.jmusixmatch.MusixMatchException;
 
 import java.awt.event.KeyEvent;
+import java.awt.font.NumericShaper;
 import java.util.*;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -41,6 +43,7 @@ public class Bot {
     private String[] googleClasses;
     private AutoSpammer spammerThread;
     private List<String> specTransferResponses;
+    private LyricsExtractor lyricsExtractor;
     private int jbDay;
     private boolean resolved = false;
     private boolean crying = false;
@@ -61,7 +64,8 @@ public class Bot {
     }
     
     private Bot(CommandLine clp) throws AWTException {
-        
+
+        lyricsExtractor = new LyricsExtractor();
         nickname = clp.getArgument("nickname");
         config = new File(clp.getArgument("config"));
         outputConfig = new File(clp.getArgument("output"));
@@ -91,6 +95,8 @@ public class Bot {
                 "Z0LcW",
                 "gsrt",
                 "vk_bk dDoNo",
+                "dDoNo vk_bk",
+                "kltat\"><span>",
                 "title",
                 "qv3Wpe",
                 "vk_bk sol-tmp\" style=\"float:left;margin-top:-3px;font-size:64px\"><span class=\"wob_t\" id=\"wob_tm\" style=\"display:inline\"", // translation
@@ -345,7 +351,15 @@ public class Bot {
             
             for (String tag : googleClasses) {
                 if ((answerIndex = result.indexOf("class=\"" + tag)) >= 0) {
-                    if (tag.equals("ztXv9") || tag.equals("e24Kjd")) {
+                    if (tag.equals("kltat\"><span>")) {
+                        //TODO: fix
+                        return result
+                                .substring(answerIndex + 20, result.indexOf("</div>", answerIndex + 20))
+                                .replaceAll("<.+?>", "")
+                                .replaceAll("\\(.+?\\)", "");
+                    } else if (tag.equals("title")) {
+
+                    } else if (tag.equals("ztXv9") || tag.equals("e24Kjd")) {
                         String[] questionTokens = question.split("%20");
                         List<String> resultTableRecords = parseResultTable(result);
                         if (resultTableRecords == null) {
@@ -426,6 +440,11 @@ public class Bot {
     public String translateQuestion(String question) {
         ChangeableString cs = new ChangeableString(question);
         String nonTranslatableString = removeNonTranslatableString(cs);
+        cs.setString(cs
+                    .toString()
+                    .replace("j","zh")
+                    .replace("c", "ts"));
+
         if (!nonTranslatableString.equals("*")) {
             question = cs.toString();
         }
@@ -491,6 +510,7 @@ public class Bot {
 
     public void act(String line) throws IOException, InterruptedException {
         String nicknameRegex = "([~*]DEAD[~*] )?(\\[.+?])?( )?" + nickname + "( )?: ";
+        NumberParser numberParser = new NumberParser();
         
         if ((line.equals(lastQuery) || !line.contains(nickname)) && !line.contains("Quest"))
             return;
@@ -517,7 +537,7 @@ public class Bot {
         } else if (line.matches(nicknameRegex + GOOGLE_REQUEST_STRING + ".+")) {
             if (!resolved) {
                 lastQuery = line;
-                String answer = getFromGoogle(line.substring(line.indexOf(": ") + + GOOGLE_REQUEST_STRING.length() + 2), true).trim();
+                String answer = getFromGoogle(line.substring(line.indexOf(": ") + GOOGLE_REQUEST_STRING.length() + 2), true).trim();
                 writeConfig("say " + answer + "; alias quest;");
                 System.out.println(answer);
                 resolved = true;
@@ -526,7 +546,7 @@ public class Bot {
             if (!resolved) {
                 lastQuery = line;
                 String answer = getAnswer(line.substring(line.indexOf(": ") + ANSWER_REQUEST_STRING.length() + 2)).trim();
-                writeConfig("say " + answer + "; alias quest;");
+                writeConfig("say " + numberParser.getNumberFromWordsAsString(answer) + "; alias quest;");
                 System.out.println(answer);
                 resolved = true;
             }
@@ -547,16 +567,16 @@ public class Bot {
         }
     }
 
-    private String loadLyrics(String question) {
+    private String loadLyrics(String question) throws FileNotFoundException {
         question = question.trim()
                 .replace(" ", "%20")
                 .replace("\"", "%22");
 
         HttpGet request = new HttpGet("https://www.google.com/search?q=" + question + "%20lyrics&hl=en&aqs=chrome..69i57j69i59l2.517j0j9&sourceid=chrome&ie=UTF-8");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36");
-        
+
         boolean found = false;
-        
+
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             HttpEntity entity = response.getEntity();
             String result = EntityUtils.toString(entity);
@@ -567,10 +587,21 @@ public class Bot {
                 found = true;
             }
             addLyrics(lyrics);
-            
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if (!found) {
+            String[] songName = question.replace("%20", " ").split("-");
+            try {
+                addLyrics(Arrays.asList(lyricsExtractor.getLyrics(songName[0].trim(), songName[1].trim())));
+                found = true;
+            } catch (MusixMatchException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+
         return found ? "Loaded" : "Nqma q";
     }
 
@@ -594,6 +625,11 @@ public class Bot {
                 break;
             case "changeday":
                 jbDay = Integer.parseInt(commandArgument);
+                break;
+            case "clear":
+                if(outputConfig.delete())
+                    System.out.println("File deleted successfully");
+                resolved = false;
                 break;
             case "testline":
                 try {

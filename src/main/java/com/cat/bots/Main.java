@@ -3,8 +3,12 @@ package com.cat.bots;
 import com.cat.bots.robot.Bot;
 import com.cat.bots.util.CommandLine;
 import com.cat.bots.util.CommandThread;
+import com.cat.bots.util.LyricsExtractor;
+import com.cat.bots.util.NumberParser;
+import org.jmusixmatch.MusixMatchException;
 
 import java.awt.*;
+import java.awt.font.NumericShaper;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -14,8 +18,10 @@ public class Main {
     public static void main(String[] args) {
 
         CommandLine clp = new CommandLine(args);
+
         try {
             Bot bot = Bot.getInstance(clp);
+
 //            char[] alphanum = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9'};
 //            char[] symbols = {'!','@','$','^','&','*','(',')','_','+','=','-','[',']','{','}','\\','|',',','\"','.',',','/'};
 //            bot.train(alphanum,"E:/Screenshots/alphanum.png");
@@ -54,7 +60,7 @@ public class Main {
                 if (processedLine.isEmpty())
                     continue;
                 
-                bot.act(processedLine);
+                bot.act(processedLine.trim());
             }
 
         } catch (IOException | AWTException | InterruptedException e) {
